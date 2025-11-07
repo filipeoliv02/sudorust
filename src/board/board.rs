@@ -10,10 +10,31 @@ pub struct Board {
 
 impl Board {
     pub fn display(&self) {
+        let box_size = (self.size as f64).sqrt() as usize;
+        let cell_width = self.size.to_string().len().max(2); // width scales for large sizes
+
+        let horizontal_line = if box_size > 1 {
+            "-".repeat((cell_width + 1) * self.size + box_size + 1)
+        } else {
+            "-".repeat((cell_width + 1) * self.size)
+        };
+
         for y in 0..self.size {
+            if y % box_size == 0 && y != 0 {
+                println!("{}", horizontal_line);
+            }
+
             for x in 0..self.size {
+                if x % box_size == 0 && x != 0 {
+                    print!("| ");
+                }
                 let idx = self.index(x, y);
-                print!("{} ", self.cells[idx]);
+                let value = self.cells[idx];
+                if value == 0 {
+                    print!("{:>width$} ", "□", width = cell_width);
+                } else {
+                    print!("{:>width$} ", value, width = cell_width);
+                }
             }
             println!();
         }
