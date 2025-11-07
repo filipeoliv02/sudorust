@@ -1,3 +1,6 @@
+use std::fs::File;
+use std::io::Read;
+
 pub struct Board {
     size: usize,
     cells: Vec<usize>,
@@ -20,8 +23,25 @@ impl Board {
         y * self.size + x
     }
 
-    fn check_if_valid(&self, x: usize, y: usize, value: usize) -> bool {
-        let idx = self.index(x, y);
+    pub fn solve_brute_force(&mut self) -> bool {
+        for idx in 0..self.cells.len() {
+            if self.cells[idx] == 0 {
+                for value in 1..=self.size {
+                    if self.check_if_valid(idx, value) {
+                        self.cells[idx] = value;
+                        if self.solve_brute_force() {
+                            return true;
+                        }
+                        self.cells[idx] = 0;
+                    }
+                }
+                return false;
+            }
+        }
+        true
+    }
+
+    fn check_if_valid(&self, idx: usize, value: usize) -> bool {
         !self.exists_in_row(idx, value)
             && !self.exists_in_column(idx, value)
             && !self.exists_in_box(idx, value)
@@ -67,14 +87,28 @@ impl Board {
         false
     }
 
-    fn set_value(&mut self, x: usize, y: usize, value: usize) {
-        let idx = self.index(x, y);
-        self.cells[idx] = value;
-    }
-
-    fn get_value(&self, x: usize, y: usize) -> usize {
-        let idx = self.index(x, y);
-        self.cells[idx]
+    pub fn import_from_file(_file_path: &str) -> Board {
+        let mut file = File::open(_file_path).expect("File not found");
+        let mut contents = String::new();
+        _ = file.read_to_string(&mut contents);
+        let mut board = Board {
+            size: 0,
+            cells: vec![],
+            fixed_cells: vec![],
+        };
+        for line in contents.lines() {
+            for ch in line.chars() {
+                if ch.is_digit(10) {
+                    let digit = ch.to_digit(10).unwrap() as usize;
+                    if digit != 0 {
+                        board.fixed_cells.push((board.cells.len(), digit));
+                    }
+                    board.cells.push(digit);
+                }
+            }
+        }
+        board.size = (board.cells.len() as f64).sqrt() as usize;
+        board
     }
 }
 

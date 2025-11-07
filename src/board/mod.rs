@@ -1,3 +1,3 @@
-mod board;
+pub(crate) mod board;
 
 
