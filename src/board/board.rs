@@ -44,6 +44,31 @@ impl Board {
         y * self.size + x
     }
 
+    pub fn generate_new_sudoku(size: usize, number_of_clues: usize) -> Board {
+        use rand::Rng;
+        let mut board = Board {
+            size,
+            cells: vec![0; size * size],
+            fixed_cells: vec![],
+        };
+        let mut clues_added = 0;
+        let mut rng = rand::rng();
+
+        while clues_added < number_of_clues {
+            let row = rng.random_range(0..size);
+            let col = rng.random_range(0..size);
+            let num = rng.random_range(1..=size);
+            let idx = board.index(col, row);
+
+            if board.cells[idx] == 0 && board.check_if_valid(idx, num) {
+                board.cells[idx] = num;
+                board.fixed_cells.push((idx, num));
+                clues_added += 1;
+            }
+        }
+        board
+    }
+
     pub fn solve_brute_force(&mut self) -> bool {
         for idx in 0..self.cells.len() {
             if self.cells[idx] == 0 {
