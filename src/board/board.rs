@@ -1,11 +1,13 @@
 use std::fs::File;
 use std::io::Read;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
+#[derive(Clone)]
 pub struct Board {
-    size: usize,
-    cells: Vec<usize>,
-    // fixed cells (index, value)
-    fixed_cells: Vec<(usize, usize)>,
+    pub(crate) size: usize,
+    pub(crate) cells: Vec<usize>,
+    pub(crate) fixed_cells: Vec<(usize, usize)>, // fixed cells (index, value)
 }
 
 impl Board {
@@ -85,6 +87,78 @@ impl Board {
             }
         }
         true
+    }
+
+    pub fn solve_all(&mut self) -> Vec<Vec<usize>> {
+        let mut solutions = Vec::new();
+        self.solve_all_recursive(&mut solutions);
+        solutions
+    }
+
+    fn solve_all_recursive(&mut self, solutions: &mut Vec<Vec<usize>>) {
+        for idx in 0..self.cells.len() {
+            if self.cells[idx] == 0 {
+                for value in 1..=self.size {
+                    if self.check_if_valid(idx, value) {
+                        self.cells[idx] = value;
+                        self.solve_all_recursive(solutions);
+                        self.cells[idx] = 0;
+                    }
+                }
+                return;
+            }
+        }
+        solutions.push(self.cells.clone());
+    }
+
+    pub fn solve_all_parallel(&self) -> Vec<Vec<usize>> {
+        let empty_idx = self.cells.iter().position(|&x| x == 0);
+
+        if empty_idx.is_none() {
+            return vec![self.cells.clone()];
+        }
+
+        let idx = empty_idx.unwrap();
+        let num_threads = num_cpus::get();
+
+        let tasks: Vec<Board> = (1..=self.size)
+            .filter(|&v| self.check_if_valid(idx, v))
+            .map(|v| {
+                let mut new_board = self.clone();
+                new_board.cells[idx] = v;
+                new_board
+            })
+            .collect();
+
+        let tasks = Arc::new(Mutex::new(tasks));
+        let solutions = Arc::new(Mutex::new(Vec::new()));
+
+        let mut handles = Vec::new();
+
+        for _ in 0..num_threads {
+            let tasks_clone = Arc::clone(&tasks);
+            let solutions_clone = Arc::clone(&solutions);
+
+            let handle = thread::spawn(move || {
+                while let Some(mut board) = {
+                    let mut locked = tasks_clone.lock().unwrap();
+                    locked.pop()
+                } {
+                    let mut result = board.solve_all();
+                    let mut sol_locked = solutions_clone.lock().unwrap();
+                    sol_locked.append(&mut result);
+                }
+            });
+
+            handles.push(handle);
+        }
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        let final_solutions = Arc::try_unwrap(solutions).unwrap().into_inner().unwrap();
+        final_solutions
     }
 
     fn check_if_valid(&self, idx: usize, value: usize) -> bool {
