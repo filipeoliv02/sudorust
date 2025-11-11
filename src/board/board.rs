@@ -1,20 +1,19 @@
 use std::fs::File;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
-use std::thread;
+use std::{fmt, thread};
 
 #[derive(Clone)]
 pub struct Board {
-    pub(crate) size: usize,
-    pub(crate) cells: Vec<usize>,
-    pub(crate) fixed_cells: Vec<(usize, usize)>, // fixed cells (index, value)
+    pub size: usize,
+    pub cells: Vec<usize>,
+    pub fixed_cells: Vec<(usize, usize)>, // fixed cells (index, value)
 }
 
-impl Board {
-    /// Displays the Sudoku board in a human-readable format.
-    pub fn display(&self) {
+impl fmt::Display for Board {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let box_size = (self.size as f64).sqrt() as usize;
-        let cell_width = self.size.to_string().len().max(2); // width scales for large sizes
+        let cell_width = self.size.to_string().len().max(2); // adjusts spacing for large sizes
 
         let horizontal_line = if box_size > 1 {
             "-".repeat((cell_width + 1) * self.size + box_size + 1)
@@ -24,25 +23,30 @@ impl Board {
 
         for y in 0..self.size {
             if y % box_size == 0 && y != 0 {
-                println!("{}", horizontal_line);
+                writeln!(f, "{}", horizontal_line)?;
             }
 
             for x in 0..self.size {
                 if x % box_size == 0 && x != 0 {
-                    print!("| ");
+                    write!(f, "| ")?;
                 }
+
                 let idx = self.index(x, y);
                 let value = self.cells[idx];
                 if value == 0 {
-                    print!("{:>width$} ", "□", width = cell_width);
+                    write!(f, "{:>width$} ", "□", width = cell_width)?;
                 } else {
-                    print!("{:>width$} ", value, width = cell_width);
+                    write!(f, "{:>width$} ", value, width = cell_width)?;
                 }
             }
-            println!();
+            writeln!(f)?;
         }
-    }
 
+        Ok(())
+    }
+}
+
+impl Board {
     /// Returns all possible solutions for the current Sudoku board.
     pub fn get_all_solutions(&mut self) -> Vec<Vec<usize>> {
         let mut solutions = Vec::new();
@@ -124,7 +128,7 @@ impl Board {
                 clues_added += 1;
             }
         }
-        board.display();
+
         if board.check_if_possible() {
             board
         } else {
@@ -262,16 +266,6 @@ impl Board {
 #[cfg(test)]
 mod tests {
     use crate::board::board::Board;
-
-    #[test]
-    fn test_display_board() {
-        let board = Board {
-            size: 4,
-            cells: vec![1, 2, 3, 4, 4, 3, 2, 1, 1, 2, 3, 4, 4, 3, 2, 1],
-            fixed_cells: vec![],
-        };
-        board.display();
-    }
 
     #[test]
     fn test_exists_in_row() {
