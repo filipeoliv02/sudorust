@@ -47,6 +47,7 @@ impl fmt::Display for Board {
 }
 
 impl Board {
+    #![allow(dead_code)]
     /// Returns all possible solutions for the current Sudoku board.
     pub fn get_all_solutions(&mut self) -> Vec<Vec<usize>> {
         let mut solutions = Vec::new();
