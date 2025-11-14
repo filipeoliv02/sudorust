@@ -1,10 +1,10 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
 use std::{fmt, thread};
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Board {
     pub size: usize,
     pub cells: Vec<usize>,
