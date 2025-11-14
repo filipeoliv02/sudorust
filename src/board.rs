@@ -1,9 +1,10 @@
+use serde::Serialize;
 use std::fs::File;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
 use std::{fmt, thread};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct Board {
     pub size: usize,
     pub cells: Vec<usize>,
@@ -178,7 +179,7 @@ impl Board {
     }
 
     /// Solves the Sudoku board using a brute-force backtracking algorithm.
-    fn solve_brute_force(&mut self) -> bool {
+    pub fn solve_brute_force(&mut self) -> bool {
         for idx in 0..self.cells.len() {
             if self.cells[idx] == 0 {
                 for value in 1..=self.size {

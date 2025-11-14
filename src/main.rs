@@ -1,7 +1,18 @@
 mod board;
-use board::Board as boardImpl;
+mod controller;
+use crate::controller::generate_board;
+use axum::{routing::post, Router};
+use tracing::info;
 
-fn main() {
-    let board1 = boardImpl::generate_new_sudoku(9, 25);
-    println!("{}", board1);
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt::init();
+    info!("Initializing server...");
+
+    let app = Router::new().route("/generate", post(generate_board));
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    info!("Listening on {}", listener.local_addr().unwrap());
+
+    axum::serve(listener, app).await.unwrap();
 }
