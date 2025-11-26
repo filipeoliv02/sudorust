@@ -1,7 +1,7 @@
 use crate::board::Board;
 use axum::response::IntoResponse;
 use axum::{http::StatusCode, Json};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct GenerateBoardPayload {
@@ -20,4 +20,10 @@ pub async fn solve_board(Json(mut payload): Json<Board>) -> impl IntoResponse {
     } else {
         (StatusCode::BAD_REQUEST, Json("No solution found")).into_response()
     }
+}
+
+pub async fn get_number_of_solutions(Json(mut payload): Json<Board>) -> impl IntoResponse {
+    let solutions = payload.get_all_solutions();
+    let number_of_solutions = solutions.len();
+    (StatusCode::OK, Json(number_of_solutions)).into_response()
 }
