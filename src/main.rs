@@ -1,7 +1,11 @@
-mod board;
-use board::Board as boardImpl;
+use sudorust::board::Board;
 
 fn main() {
-    let board1 = boardImpl::generate_new_sudoku(9, 25);
-    println!("{}", board1);
+    match Board::generate_new_sudoku(9, 25) {
+        Ok(board) => println!("{board}"),
+        Err(error) => {
+            eprintln!("Failed to generate Sudoku: {error}");
+            std::process::exit(1);
+        }
+    }
 }
