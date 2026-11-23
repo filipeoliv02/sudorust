@@ -1,4 +1,5 @@
-use rand::Rng;
+use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
 use std::fmt;
 use std::fs;
 use std::sync::{Arc, Mutex};
@@ -211,7 +212,11 @@ impl Board {
                 cells: vec![0; total],
                 fixed_cells: Vec::new(),
             };
-            let mut rng = rand::rng();
+            // Use the explicit, cryptographically seeded generator rather than the
+            // thread-local convenience handle. This keeps the generator independent
+            // of global logger state and avoids the current rand advisory around
+            // `rand::rng()` with custom loggers.
+            let mut rng = StdRng::from_os_rng();
             let mut clues_added = 0;
             let mut attempts = 0;
             const CLUE_ATTEMPTS_PER_CLUE: usize = 1000;
